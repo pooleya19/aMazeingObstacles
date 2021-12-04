@@ -8,38 +8,21 @@ In command prompt:
 import pygame
 import sys
 from pygame.locals import *
-from Graph import Graph
 import time
 import random
 
-def main():
-    print("Beginning Program.")
-    screenSize = (1200,800)
-    global screen
-    screen = pygame.display.set_mode(screenSize)
-    print("Size:", screen.get_size())
-    pygame.display.set_caption("Maze Visual")
+from Graph import Graph
+from Display import Display
 
-    background = makeSurface(screen.get_size(), (180,180,180))
-    screen.blit(background, (0,0))
+display = Display()
+
+def main():
+    display.start()
 
     while True:
-        pygame.display.update()
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                quit()
-            if event.type == KEYDOWN:
-                if(event.key == K_ESCAPE):
-                    quit()
-                elif(event.key == K_SPACE):
-                    generateMaze()
+        display.update()
 
-def makeSurface(size, rgb):
-    surface = pygame.Surface(size)
-    surface = surface.convert()
-    surface.fill(rgb)
-    return surface
-
+"""
 def generateMaze():
     startTime = time.time()
     mazeBorderThick = 5
@@ -51,8 +34,8 @@ def generateMaze():
     screen.blit(maze, mazePos)
     pygame.display.update()
 
-    rows = 50
-    columns = 50
+    rows = 5
+    columns = 10
 
     mazeBrushThickness = 5
     if(rows > 50 or columns > 50): mazeBrushThickness = 2
@@ -113,11 +96,7 @@ def generateMaze():
             time.sleep(delay)
     print("Generated Maze.")
     print("Elapsed Time:",round(time.time()-startTime,5),"seconds")
-
-def quit():
-    print("Attempted Quit")
-    pygame.quit()
-    sys.exit()
+"""
 
 #Nice to have program start by calling a specific function, rather than just executing code from top
 if __name__ == '__main__':

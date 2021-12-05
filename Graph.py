@@ -98,15 +98,15 @@ class Graph:
         return newGraph
 
 
-def createRandomGraph(rows, columns, floorNumber):
+def createRandomGraph(rows, columns, floors):
     graph = Graph()
 
-    for i in range(0, floorNumber):
+    for floor in range(0, floors):
         tempGraph = Graph()
         maxRand = 10000
         for row in range(0, rows):
             for column in range(0, columns):
-                node1 = column + row * columns + rows * columns * floorNumber
+                node1 = column + row * columns + rows * columns * floor
                 if (row != 0):
                     node2 = node1 - columns
                     weight = random.randrange(0, maxRand)
@@ -174,7 +174,7 @@ def createRandomGraph(rows, columns, floorNumber):
                 # red
 
 
-    for i in range(0, floorNumber - 1): # make the ladder
+    for i in range(0, floors - 1): # make the ladder
         rand1 = random.randrange(0, rows * columns)
         rand2 = rand1
         while (rand2 == rand1):

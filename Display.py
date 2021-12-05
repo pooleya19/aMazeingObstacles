@@ -33,6 +33,8 @@ class Display:
 
     def createObjects(self):
         self.buttons.append(Button("Generate Maze",50,(200,200),self.button_GenerateMaze))
+        self.buttons.append(Button("Up",30,(200,400),self.button_floorUp))
+        self.buttons.append(Button("Down", 30, (200, 500), self.button_floorDown))
         self.texts.append(Text("aMazeing Obstacles", 50, (230,40)))
 
     def setupMaze(self):
@@ -45,7 +47,7 @@ class Display:
 
         self.rows = 50
         self.columns = 50
-        self.floors = 2
+        self.floors = 3
 
     def makeSurface(self, size, rgb):
         surface = pygame.Surface(size)
@@ -87,6 +89,12 @@ class Display:
 
 
     def button_GenerateMaze(self):
+        print("Generate Maze.")
+        self.graph = createRandomGraph(self.rows, self.columns, self.floors)
+        print("Edges:", self.graph.getEdgeCount())
+        self.preRenderMaze()
+
+    def preRenderMaze(self):
         mazeBrushThickness = 5
         if (self.rows > 50 or self.columns > 50):
             mazeBrushThickness = 2
@@ -95,29 +103,47 @@ class Display:
         gridCellSize = (self.mazeSize[0] / self.columns, self.mazeSize[1] / self.rows)
         lineThick = mazeBrushThickness
         lineColor = (255, 255, 255)
-
-        print("Generate Maze.")
-        graph = createRandomGraph(self.rows, self.columns, self.floors)
-        print("Edges:",graph.getEdgeCount())
+        ladderNode = self.makeSurface(mazeNodeSize, (0,0,0))
 
         self.currentMaze = pygame.Surface(self.maze.get_size())
         self.currentMaze.blit(self.maze, (0,0))
         for row in range(0,self.rows):
             for column in range(0,self.columns):
-                node1Pos = (column * gridCellSize[0] + gridCellSize[0] * 0.5 - mazeNodeSize[0] / 2,
-                            row * gridCellSize[1] + gridCellSize[1] * 0.5 - mazeNodeSize[1] / 2)
-                self.currentMaze.blit(mazeNode, node1Pos)
-                print(node1Pos)
                 node1 = column + row*self.columns + self.activeFloor*self.rows*self.columns
-                node1Pos = (column * gridCellSize[0] + gridCellSize[0] * 0.5,
-                            row * gridCellSize[1] + gridCellSize[1] * 0.5)
-                edges = graph.adjList[node1]
+                node1Pos = (column * gridCellSize[0] + gridCellSize[0] * 0.5 - 1,
+                            row * gridCellSize[1] + gridCellSize[1] * 0.5 - 1)
+                edges = self.graph.adjList[node1]
                 for node2 in edges.keys():
                     node2column = node2 % self.columns
                     node2row = int((node2 % (self.rows*self.columns))/self.columns)
-                    node2Pos = (node2column * gridCellSize[0] + gridCellSize[0] * 0.5,
-                                node2row * gridCellSize[1] + gridCellSize[1] * 0.5)
+                    node2Pos = (node2column * gridCellSize[0] + gridCellSize[0] * 0.5 - 1,
+                                node2row * gridCellSize[1] + gridCellSize[1] * 0.5 - 1)
                     pygame.draw.line(self.currentMaze, lineColor, node1Pos, node2Pos, lineThick)
+        for row in range(0,self.rows):
+            for column in range(0,self.columns):
+                node1 = column + row*self.columns + self.activeFloor*self.rows*self.columns
+                node1Pos = (column * gridCellSize[0] + gridCellSize[0] * 0.5 - mazeNodeSize[0] / 2,
+                            row * gridCellSize[1] + gridCellSize[1] * 0.5 - mazeNodeSize[1] / 2)
+                self.currentMaze.blit(mazeNode, node1Pos)
+                edges = self.graph.adjList[node1]
+                for node2 in edges.keys():
+                    node2column = node2 % self.columns
+                    node2row = int((node2 % (self.rows*self.columns))/self.columns)
+                    if (row == node2row and column == node2column):
+                        self.currentMaze.blit(ladderNode, node1Pos)
+
+    def button_floorUp(self):
+        self.activeFloor += 1
+        if(self.activeFloor >= self.floors): self.activeFloor = self.floors-1
+        print("Floor Up")
+        self.preRenderMaze()
+
+    def button_floorDown(self):
+        self.activeFloor -= 1
+        if(self.activeFloor <= 0): self.activeFloor = 0
+        print("Floor Down")
+        self.preRenderMaze()
+
 
     def quit(self):
         print("Attempted Quit")

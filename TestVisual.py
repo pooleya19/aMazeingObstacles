@@ -8,7 +8,7 @@ In command prompt:
 import pygame
 import sys
 from pygame.locals import *
-from Graph import Graph
+from Graph import *
 import time
 import random
 
@@ -72,33 +72,13 @@ def generateMaze():
             node1Pos = (mazePos[0] + column * gridCellSize[0] + gridCellSize[0] * 0.5 - mazeNodeSize[0] / 2,
                         mazePos[1] + row * gridCellSize[1] + gridCellSize[1] * 0.5 - mazeNodeSize[1] / 2)
             screen.blit(mazeNode, node1Pos)
-            node1 = column + row * columns
-            if (row != 0):
-                node2 = node1 - columns
-                weight = random.randrange(0,maxRand)
-                graph.add_edge(node1, node2, weight)
-                graph.add_edge(node2, node1, weight)
-            if (row != rows - 1):
-                node2 = node1 + columns
-                weight = random.randrange(0,maxRand)
-                graph.add_edge(node1, node2, weight)
-                graph.add_edge(node2, node1, weight)
-            if (column != 0):
-                node2 = node1 - 1
-                weight = random.randrange(0,maxRand)
-                graph.add_edge(node1, node2, weight)
-                graph.add_edge(node2, node1, weight)
-            if (column != columns - 1):
-                node2 = node1 + 1
-                weight = random.randrange(0,maxRand)
-                graph.add_edge(node1, node2, weight)
-                graph.add_edge(node2, node1, weight)
 
-    MSTedges = graph.createMinimumSpanningTree()
-    print("MST Length:", len(MSTedges))
+
+    MSTedges = createRandomGraph(10, 10, 1)
+    print("MST Length:", len(MSTedges.adjList))
     debugPrint = True
     delay = 0.001
-    for MSTedge in MSTedges:
+    for MSTedge in MSTedges.adjList:
         node1 = MSTedge[0]
         node2 = MSTedge[1]
         node1GridPos = (node1 % columns, int(node1 / columns))

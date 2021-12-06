@@ -19,7 +19,7 @@ class Edge:
         return self.weight
 
     def getName(self):
-        return self.weight
+        return self.name
 
 class Graph:
     def __init__(self):
@@ -138,29 +138,29 @@ def createRandomGraph(rows, columns, floors):
             edge2 = graph.adjList[node2][node1]
 
             tile = random.randrange(0, 100)
-            if (tile < 50):
+            if (tile < 50): # 50
                 edge1.setWeight(20)
                 edge1.setName("Path")  # white
                 edge2.setWeight(20)
                 edge2.setName("Path")
-            elif (tile < 60):
+            elif (tile < 60): # 60
                 edge1.setWeight(50)
                 edge1.setName("Water")  # blue
                 edge2.setWeight(50)
                 edge2.setName("Water")
-            elif (tile < 70):
+            elif (tile < 70): # 70
                 edge1.setWeight(5)
                 edge1.setName("Conveyor Belt")
                 edge2.setWeight(5)
                 edge2.setName("Conveyor Belt")
                 # grey
-            elif (tile < 83):
+            elif (tile < 83): # 83
                 edge1.setWeight(35)
                 edge1.setName("Glue")
                 edge2.setWeight(35)
                 edge2.setName("Glue")
                 # yellow
-            elif (tile < 95):
+            elif (tile < 95): # 95
                 edge1.setWeight(10)
                 edge1.setName("Ice")
                 edge2.setWeight(10)

@@ -114,6 +114,19 @@ class Display:
                             row * gridCellSize[1] + gridCellSize[1] * 0.5 - 1)
                 edges = self.graph.adjList[node1]
                 for node2 in edges.keys():
+                    # print(self.graph.adjList[node1][node2].getName())
+                    if(self.graph.adjList[node1][node2].getName() == "Water"):
+                        lineColor = (0, 0, 255)
+                    elif(self.graph.adjList[node1][node2].getName() == "Conveyor Belt"):
+                        lineColor = (128, 128, 128)
+                    elif (self.graph.adjList[node1][node2].getName() == "Glue"):
+                        lineColor = (255, 255, 51)
+                    elif (self.graph.adjList[node1][node2].getName() == "Ice"):
+                        lineColor = (153, 255, 255)
+                    elif (self.graph.adjList[node1][node2].getName() == "Minotaur"):
+                        lineColor = (255, 0, 0)
+                    elif (self.graph.adjList[node1][node2].getName() == "Path"):
+                        lineColor = (255, 255, 255)
                     node2column = node2 % self.columns
                     node2row = int((node2 % (self.rows*self.columns))/self.columns)
                     node2Pos = (node2column * gridCellSize[0] + gridCellSize[0] * 0.5 - 1,

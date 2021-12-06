@@ -118,7 +118,7 @@ class Display:
                     if(self.graph.adjList[node1][node2].getName() == "Water"):
                         lineColor = (0, 0, 255)
                     elif(self.graph.adjList[node1][node2].getName() == "Conveyor Belt"):
-                        lineColor = (128, 128, 128)
+                        lineColor = (255, 178, 102)
                     elif (self.graph.adjList[node1][node2].getName() == "Glue"):
                         lineColor = (255, 255, 51)
                     elif (self.graph.adjList[node1][node2].getName() == "Ice"):

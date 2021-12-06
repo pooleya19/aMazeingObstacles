@@ -7,7 +7,7 @@ def breadthFirst(graph, node1, node2, rows, columns, floors):
     q = []
     finalWeights = []
     visited.append(node1)
-    q.Value.append(0)
+    qValue.append(0)
     q.append(node1)
 
     while(len(visited) > 0):

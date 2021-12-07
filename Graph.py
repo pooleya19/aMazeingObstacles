@@ -194,4 +194,5 @@ def createRandomGraph(rows, columns, floors):
 
 def combine(Graph1, Graph2):
     Graph1.adjList.update(Graph2.adjList)
+    Graph1.values += Graph2.values
     return Graph1

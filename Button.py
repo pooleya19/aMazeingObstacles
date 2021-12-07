@@ -4,21 +4,27 @@ from Text import getTextSurface
 class Button:
     def __init__(self, text, textSize, buttonPos, func):
         self.func = func
+        self.text = text
+        self.textSize = textSize
+        self.buttonPos = buttonPos
+        self.preRenderSurface()
 
-        textSurface = getTextSurface(text, textSize)
+    def preRenderSurface(self):
+        textSurface = getTextSurface(self.text, self.textSize)
 
         textBorder = 10
-        self.size = (textSurface.get_size()[0]+2*textBorder,textSurface.get_size()[1]+2*textBorder)
+        self.size = (textSurface.get_size()[0] + 2 * textBorder, textSurface.get_size()[1] + 2 * textBorder)
         buttonSurface_default = pygame.Surface(self.size)
         buttonSurface_default.convert()
-        buttonSurface_default.fill((140,140,140))
-        buttonSurface_default.blit(textSurface,(textBorder,textBorder))
+        buttonSurface_default.fill((140, 140, 140))
+        buttonSurface_default.blit(textSurface, (textBorder, textBorder))
         buttonSurface_hover = pygame.Surface(self.size)
         buttonSurface_hover.convert()
         buttonSurface_hover.fill((100, 100, 100))
-        buttonSurface_hover.blit(textSurface, (textBorder,textBorder))
+        buttonSurface_hover.blit(textSurface, (textBorder, textBorder))
         self.buttonSurfaces = (buttonSurface_default, buttonSurface_hover)
-        self.cornerPos = (buttonPos[0] - self.size[0]/2, buttonPos[1] - self.size[1]/2)
+        self.cornerPos = (self.buttonPos[0] - self.size[0] / 2, self.buttonPos[1] - self.size[1] / 2)
+
 
     def render(self, screen):
         if(self.mouseOver()):

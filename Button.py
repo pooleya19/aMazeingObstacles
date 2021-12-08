@@ -2,12 +2,15 @@ import pygame
 from Text import getTextSurface
 
 class Button:
-    def __init__(self, text, textSize, buttonPos, func):
+    def __init__(self, text, textSize, buttonPos, func=None):
         self.func = func
         self.text = text
         self.textSize = textSize
         self.buttonPos = buttonPos
         self.preRenderSurface()
+        self.hoverOver = False
+        self.hoverOn = None
+        self.hoverOff = None
 
     def preRenderSurface(self):
         textSurface = getTextSurface(self.text, self.textSize)
@@ -29,8 +32,14 @@ class Button:
     def render(self, screen):
         if(self.mouseOver()):
             screen.blit(self.buttonSurfaces[1], self.cornerPos)
+            if(self.hoverOver == False):
+                self.hoverOver = True
+                if(self.hoverOn != None): self.hoverOn()
         else:
             screen.blit(self.buttonSurfaces[0], self.cornerPos)
+            if(self.hoverOver == True):
+                self.hoverOver = False
+                if(self.hoverOff != None): self.hoverOff()
 
     def mouseOver(self):
         cursorPos = pygame.mouse.get_pos()
@@ -40,5 +49,11 @@ class Button:
         else:
             return False
 
+    def setHoverFunctions(self, hoverOn, hoverOff):
+        self.hoverOn = hoverOn
+        self.hoverOff = hoverOff
+
+
+
     def activate(self):
-        self.func()
+        if(self.func != None):  self.func()

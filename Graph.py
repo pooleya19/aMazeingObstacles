@@ -1,4 +1,5 @@
 import random
+import time
 
 class Edge:
     def __init__(self):
@@ -98,7 +99,7 @@ class Graph:
         return newGraph
 
 
-def createRandomGraph(rows, columns, floors):
+def createRandomGraph(rows, columns, floors, benchmarkFunc):
     graph = Graph()
 
     for floor in range(0, floors):
@@ -130,6 +131,8 @@ def createRandomGraph(rows, columns, floors):
 
         tempGraph = tempGraph.createMinimumSpanningTree()
         graph = combine(graph, tempGraph)
+
+        benchmarkFunc((floor+1)/floors * 100)
 
     for node1 in graph.adjList.keys(): # makes the different obstacles
         edges = graph.adjList[node1]
@@ -173,7 +176,6 @@ def createRandomGraph(rows, columns, floors):
                 edge2.setName("Minotaur")
                 # red
 
-
     for i in range(0, floors - 1): # make the ladder
         rand1 = random.randrange(0, rows * columns)
         rand2 = rand1
@@ -190,6 +192,7 @@ def createRandomGraph(rows, columns, floors):
         graph.adjList[rand2][rand2to] = Edge2
         graph.adjList[rand2to][rand2] = Edge2
 
+    benchmarkFunc(100)
     return graph
 
 def combine(Graph1, Graph2):

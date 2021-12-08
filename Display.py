@@ -18,6 +18,7 @@ class Display:
         self.maze = None
         self.activeFloor = 0
         self.graph = None
+        self.activeNode = None
 
     def start(self):
         print("Beginning Program.")
@@ -32,10 +33,13 @@ class Display:
         self.createObjects()
         self.setupMaze()
 
-        self.renderingDijsktra = False
+        self.renderingDijkstra = False
         self.dijkstraSolution = None
         self.renderingBellmanFord = False
         self.bellmanFordSolution = None
+
+        self.preRenderLegend()
+        self.renderingLegend = False
 
     def renderBackground(self):
         self.screen.blit(self.background, (0,0))
@@ -43,28 +47,42 @@ class Display:
     def createObjects(self):
         self.buttons.append(Button("Generate Maze",50,(200,200),self.button_generateMaze))
         self.buttons.append(Button("Set Dimensions",30,(200,270),self.button_setDimensions))
-        self.buttons.append(Button("Up",30,(700,630),self.button_floorUp))
-        self.buttons.append(Button("Down", 30, (700, 690), self.button_floorDown))
-        self.buttons.append(Button("Solve: Dijkstra", 30, (200, 400), self.button_solveDijkstra))
-        self.buttons.append(Button("Solve: Bellman Ford", 30, (200, 460), self.button_solveBellmanFord))
 
-        self.texts.append(Text("aMazeing Obstacles", 50, (230,40)))
-        self.floorCounter = Text("Floor: 0", 30, (700,580))
+        self.buttons.append(Button("Up",30,(700,660),self.button_floorUp))
+        self.buttons.append(Button("Down", 30, (700, 720), self.button_floorDown))
+
+        self.buttons.append(Button("Solve: Dijkstra", 30, (200, 450), self.button_solveDijkstra))
+        self.buttons.append(Button("Step Through", 30, (130, 510), self.button_stepThroughDijkstra))
+        self.buttons.append(Button("Save GIF", 30, (300, 510), self.button_solveDijkstra))
+
+        self.buttons.append(Button("Solve: Bellman Ford", 30, (200, 650), self.button_solveBellmanFord))
+        self.buttons.append(Button("Step Through", 30, (130, 710), self.button_solveBellmanFord))
+        self.buttons.append(Button("Save GIF", 30, (300, 710), self.button_solveBellmanFord))
+
+        self.legendButton = Button("Maze Legend", 30, (1050, 40))
+        self.legendButton.setHoverFunctions(self.showLegend, self.hideLegend)
+        self.buttons.append(self.legendButton)
+
+        self.buttons.append(Button("Set Start", 30, (540, 160), self.button_setStart))
+        self.buttons.append(Button("Set End", 30, (540, 220), self.button_setEnd))
+
+        self.texts.append(Text("aMazeing Obstacles", 60, (250,40)))
+        self.floorCounter = Text("Floor: 0", 30, (700,610))
         self.texts.append(self.floorCounter)
         self.processing = Text("Processing...",30,(1070,780))
 
-        self.colorDict = {"Water":(0,0,255),
-                          "Conveyor Belt":(255,178,102),
-                          "Glue":(255,255,51),
-                          "Ice":(153,255,255),
-                          "Minotaur":(255,0,0),
-                          "Path":(255,255,255),
-                          "Ladder":(0,0,0)}
+        self.edgeDict = {"Water":((0,0,255),50),
+                          "Conveyor Belt":((255,178,102),5),
+                          "Glue":((255,255,51),35),
+                          "Ice":((153,255,255),10),
+                          "Minotaur":((255,0,0),60),
+                          "Path":((255,255,255),20),
+                          "Ladder":((0,0,0),40)}
 
 
     def setupMaze(self):
         self.mazeBorderThick = 5
-        self.mazePos = (650,50)
+        self.mazePos = (650,80)
         self.mazeSize = (500,500)
         self.mazeBorder = self.makeSurface((self.mazeSize[0] + 2 * self.mazeBorderThick, self.mazeSize[1] + 2 * self.mazeBorderThick),(150, 150, 150))
         self.maze = self.makeSurface(self.mazeSize, (150, 150, 150))
@@ -74,6 +92,22 @@ class Display:
         self.rows = 20
         self.columns = 20
         self.floors = 5
+
+    def preRenderLegend(self):
+        self.legendSize = self.mazeSize
+        self.legendPos = self.mazePos
+        self.legend = self.makeSurface(self.legendSize, (180,180,180))
+        title = Text("Path Name     Color     Difficulty", 40, (250,30))
+        title.render(self.legend)
+
+        edges = list(self.edgeDict.keys())
+        for i in range(0,len(edges)):
+            edgeName = edges[i]
+            edgeNameText = Text(edgeName,30,(90,80+40*i))
+            edgeNameText.render(self.legend)
+            pygame.draw.line(self.legend,self.edgeDict[edgeName][0],(240,80+40*i),(290,80+40*i),5)
+            edgeDifficulty = Text(str(self.edgeDict[edgeName][1]),40,(420,80+40*i))
+            edgeDifficulty.render(self.legend)
 
     def makeSurface(self, size, rgb):
         surface = pygame.Surface(size)
@@ -89,6 +123,7 @@ class Display:
         self.renderDijkstra()
         self.renderBellmanFord()
         self.drawMaze()
+        self.renderLegend()
         pygame.display.update()
 
     def renderObjects(self):
@@ -105,19 +140,21 @@ class Display:
                 if (event.key == K_ESCAPE):
                     quit()
                 elif(event.key == K_SPACE):
-                    self.renderingDijsktra = True
+                    self.renderingDijkstra = True
                 elif(event.key == K_v):
                     self.renderingBellmanFord = True
             if event.type == KEYUP:
                 if(event.key == K_SPACE):
-                    self.renderingDijsktra = False
+                    self.renderingDijkstra = False
                 elif(event.key == K_v):
                     self.renderingBellmanFord = False
             if event.type == MOUSEBUTTONDOWN:
                 for button in self.buttons:
                     if(button.mouseOver()):
                         button.activate()
-
+                mousePos = pygame.mouse.get_pos()
+                if(self.mazePos[0] < mousePos[0] < self.mazePos[0] + self.mazeSize[0] and self.mazePos[1] < mousePos[1] < self.mazePos[1] + self.mazeSize[1]):
+                    self.mouseMazeClick()
 
     def renderMaze(self):
         if(self.renderedMaze != None):
@@ -125,9 +162,8 @@ class Display:
             self.currentMaze.blit(self.renderedMaze, (0,0))
 
     def renderDijkstra(self):
-        if(self.renderingDijsktra):
+        if(self.renderingDijkstra):
             if(self.dijkstraSolution != None):
-                self.startNode = 0
                 mousePos = (pygame.mouse.get_pos()[0] - self.mazePos[0],pygame.mouse.get_pos()[1] - self.mazePos[1])
                 if(0 <= mousePos[0] < self.mazeSize[0] and 0 <= mousePos[1] < self.mazeSize[1]):
                     mouseMazePos = (int(mousePos[0]/self.gridCellSize[0]),int(mousePos[1]/self.gridCellSize[1]))
@@ -152,7 +188,6 @@ class Display:
     def renderBellmanFord(self):
         if(self.renderingBellmanFord):
             if(self.bellmanFordSolution != None):
-                self.startNode = 0
                 mousePos = (pygame.mouse.get_pos()[0] - self.mazePos[0],pygame.mouse.get_pos()[1] - self.mazePos[1])
                 if(0 <= mousePos[0] < self.mazeSize[0] and 0 <= mousePos[1] < self.mazeSize[1]):
                     mouseMazePos = (int(mousePos[0]/self.gridCellSize[0]),int(mousePos[1]/self.gridCellSize[1]))
@@ -174,17 +209,55 @@ class Display:
                         numNodes += 1
                         totalDist += lengths[currentNode]
 
+    def renderLegend(self):
+        if(self.renderingLegend):
+            self.screen.blit(self.legend, self.legendPos)
+
     def drawMaze(self):
         self.screen.blit(self.mazeBorder, (self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
         if(self.currentMaze != None):
+            if (self.startNode != None and int(self.startNode / (self.rows * self.columns)) == self.activeFloor):
+                startNodeSize = self.startNodeSurface.get_size()
+                startNodePos = (
+                self.gridCellSize[0] * (self.startNode % self.columns) + self.gridCellSize[0] / 2 - startNodeSize[0] / 2,
+                self.gridCellSize[1] * int((self.startNode % (self.rows * self.columns)) / self.columns) +
+                self.gridCellSize[1] / 2 - startNodeSize[1] / 2)
+                self.currentMaze.blit(self.startNodeSurface, startNodePos)
+            if (self.endNode != None and int(self.endNode / (self.rows * self.columns)) == self.activeFloor):
+                endNodeSize = self.endNodeSurface.get_size()
+                endNodePos = (
+                self.gridCellSize[0] * (self.endNode % self.columns) + self.gridCellSize[0] / 2 - endNodeSize[0] / 2,
+                self.gridCellSize[1] * int((self.endNode % (self.rows * self.columns)) / self.columns) +
+                self.gridCellSize[1] / 2 - endNodeSize[1] / 2)
+                self.currentMaze.blit(self.endNodeSurface, endNodePos)
+                print("rendering",endNodePos)
+
+            mousePos = (pygame.mouse.get_pos()[0] - self.mazePos[0], pygame.mouse.get_pos()[1] - self.mazePos[1])
+            if (0 < mousePos[0] < self.mazeSize[0] and 0 < mousePos[1] < self.mazeSize[1]):
+                mouseMazePos = (int(mousePos[0] / self.gridCellSize[0]), int(mousePos[1] / self.gridCellSize[1]))
+                self.currentNode = mouseMazePos[0] + self.columns * mouseMazePos[1] + self.activeFloor * self.rows * self.columns
+                currentNodeSize = self.currentNodeSurface.get_size()
+                currentNodePos = (
+                    mouseMazePos[0] * self.gridCellSize[0] + self.gridCellSize[0] / 2 - currentNodeSize[0] / 2,
+                    mouseMazePos[1] * self.gridCellSize[1] + self.gridCellSize[1] / 2 - currentNodeSize[1] / 2)
+                self.currentMaze.blit(self.currentNodeSurface, currentNodePos)
+            if(self.activeNode != None):
+                pass
+                #render activeNode onto maze (the node that was clicked on)
+                #activeNodePos =
             self.screen.blit(self.currentMaze, self.mazePos)
 
-
     def button_generateMaze(self):
+        self.activeFloor = 0
+        self.activeNode = None
+        self.floorCounter.text = "Floor: " + str(self.activeFloor)
+        self.floorCounter.preRender()
+        print("Viewing Floor",self.activeFloor)
+
         print("Generate Maze.")
         self.updateProcessing()
         startTime = time.time()
-        self.graph = createRandomGraph(self.rows, self.columns, self.floors)
+        self.graph = createRandomGraph(self.rows, self.columns, self.floors, self.updateProcessing)
         elapsedTime = time.time() - startTime
         alertMsg = "Generated " + str(self.rows) + "x" + str(self.columns) + "x" + str(self.floors) + " Maze\nElapsed Time: " + str(round(elapsedTime,5)) + " seconds"
         print(alertMsg)
@@ -193,6 +266,8 @@ class Display:
         self.preRenderMaze()
         self.dijkstraSolution = None
         self.bellmanFordSolution = None
+        self.startNode = 0
+        self.endNode = self.rows*self.columns*self.floors - 1
 
     def preRenderMaze(self):
         if(self.graph == None): return
@@ -218,7 +293,7 @@ class Display:
                 for node2 in edges.keys():
                     # print(self.graph.adjList[node1][node2].getName())
                     pathName = self.graph.adjList[node1][node2].getName()
-                    lineColor = self.colorDict[pathName]
+                    lineColor = self.edgeDict[pathName][0]
                     node2column = node2 % self.columns
                     node2row = int((node2 % (self.rows*self.columns))/self.columns)
                     node2Pos = (node2column * gridCellSize[0] + gridCellSize[0] * 0.5 - 1,
@@ -236,6 +311,14 @@ class Display:
                     node2row = int((node2 % (self.rows*self.columns))/self.columns)
                     if (row == node2row and column == node2column):
                         self.renderedMaze.blit(ladderNode, node1Pos)
+        self.preRenderNodes()
+
+    def preRenderNodes(self):
+        nodeSize = (self.gridCellSize[0]*0.6,self.gridCellSize[1]*0.6)
+        self.startNodeSurface = self.makeSurface(nodeSize,(190,120,200))
+        self.endNodeSurface = self.makeSurface(nodeSize,(120,50,130))
+        self.currentNodeSurface = self.makeSurface(nodeSize,(0,255,210))
+        self.activeNodeSurface = self.makeSurface(nodeSize,(255,0,0))
 
     def button_setDimensions(self):
         answer = pyautogui.prompt(text="Enter Dimensions:    [Rows]x[Columns]x[Floors]",title="Set New Maze Dimensions")
@@ -282,10 +365,11 @@ class Display:
         print("Viewing Floor",self.activeFloor)
 
     def button_solveDijkstra(self):
-        if(self.graph == None): return
+        if(self.graph == None):
+            pyautogui.alert(text="You must generate a maze first.",title="Error")
+            return
         print("Solving Maze using Dijkstra's Algorithm")
         self.updateProcessing()
-        self.startNode = 0
         startTime = time.time()
         (last, lengths) = dijkstra(self.graph,self.startNode, self.updateProcessing)
         elapsedTime = time.time() - startTime
@@ -294,11 +378,17 @@ class Display:
         pyautogui.alert(text=elapsedTimeMsg,title="Dijkstra's Algorithm Runtime")
         self.dijkstraSolution = (last,lengths)
 
+    def button_stepThroughDijkstra(self):
+        if(self.dijkstraSolution == None):
+            pyautogui.alert(text="You must solve using Dijkstra's algorithm first.",title="Error")
+            return
+
     def button_solveBellmanFord(self):
-        if(self.graph == None): return
+        if(self.graph == None):
+            pyautogui.alert(text="You must generate a maze first.",title="Error")
+            return
         print("Solving Maze using Bellman Ford's Algorithm")
         self.updateProcessing()
-        self.startNode = 0
         startTime = time.time()
         (last, lengths) = BellmanFord(self.graph, self.startNode, self.rows, self.columns, self.floors, self.updateProcessing)
         elapsedTime = time.time() - startTime
@@ -314,6 +404,22 @@ class Display:
         self.processing.preRender()
         print(self.processing.text)
         self.processing.render(self.screen, True)
+
+    def showLegend(self):
+        self.renderingLegend = True
+
+    def hideLegend(self):
+        self.renderingLegend = False
+
+    def button_setStart(self):
+        pass
+
+    def button_setEnd(self):
+        pass
+
+    def mouseMazeClick(self):
+        if(self.graph != None):
+            self.activeNode = self.currentNode
 
     def isInt(self, inputString):
         try:

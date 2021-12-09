@@ -66,12 +66,12 @@ class Display:
         self.buttons.append(Button("Down", 30, (700, 720), self.button_floorDown))
 
         self.buttons.append(Button("Solve: Dijkstra", 30, (200, 450), self.button_solveDijkstra))
-        self.buttons.append(Button("Step Through", 30, (130, 510), self.button_stepThroughDijkstra))
-        self.buttons.append(Button("Save GIF", 30, (300, 510), self.button_solveDijkstra))
+        self.buttons.append(Button("Step Through", 30, (200, 510), self.button_stepThroughDijkstra))
+        # self.buttons.append(Button("Save GIF", 30, (300, 510), self.button_solveDijkstra))
 
         self.buttons.append(Button("Solve: Bellman Ford", 30, (200, 650), self.button_solveBellmanFord))
-        self.buttons.append(Button("Step Through", 30, (130, 710), self.button_solveBellmanFord))
-        self.buttons.append(Button("Save GIF", 30, (300, 710), self.button_solveBellmanFord))
+        self.buttons.append(Button("Step Through", 30, (200, 710), self.button_stepThroughBellmanFord))
+        # self.buttons.append(Button("Save GIF", 30, (300, 710), self.button_solveBellmanFord))
 
         self.legendButton = Button("Maze Legend", 30, (1050, 40))
         self.legendButton.setHoverFunctions(self.showLegend, self.hideLegend)
@@ -489,14 +489,21 @@ class Display:
             pyautogui.alert(text="You must solve using Dijkstra's algorithm first.", title="Error")
             return
         else:
+            # self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+            # self.screen.blit(self.currentMaze, self.mazePos)
             # pygame.display.update()
             # time.sleep(0.001)
             # self.update()
+            self.preRenderMaze()
+            self.renderMaze()
+            self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+            self.screen.blit(self.currentMaze, self.mazePos)
             stack = []
             (last, lengths) = self.dijkstraSolution
             currentNode = self.endNode
             numNodes = 0
             totalDist = 0
+            delay = 0.2
             while (currentNode != self.startNode):
                 nextNode = last[currentNode]
                 currentPos = ((currentNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
@@ -507,14 +514,8 @@ class Display:
                            self.gridCellSize[1] / 2)
                 currentNodeFloor = int(currentNode / (self.rows * self.columns))
                 nextNodeFloor = int(nextNode / (self.rows * self.columns))
-                if (currentNodeFloor == self.activeFloor and nextNodeFloor == self.activeFloor):
-                    # pygame.draw.line(self.currentMaze, (255, 0, 255), currentPos, nextPos, 3)
-                    stack.append((currentPos, nextPos, 0))
-                elif (currentNodeFloor == self.activeFloor and nextNodeFloor > self.activeFloor):
-                    stack.append((currentPos, nextPos, 1))
-                elif (currentNodeFloor == self.activeFloor and nextNodeFloor < self.activeFloor):
-                    stack.append((currentPos, nextPos, -1))
-                print((currentPos, nextPos))
+                stack.append((currentPos, nextPos, currentNodeFloor - nextNodeFloor))
+                #print((currentPos, nextPos))
                 currentNode = nextNode
                 numNodes += 1
                 totalDist += lengths[currentNode]
@@ -527,16 +528,37 @@ class Display:
                 # print(currentPos)
                 # print(nextPos)
                 # print(floorChange)
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        quit()
+                    if event.type == KEYDOWN:
+                        if (event.key == K_ESCAPE):
+                            quit()
+                        if (event.key == K_UP):
+                            if(delay - 0.05 > 0):
+                                delay = delay - 0.05
+                            else:
+                                delay = 0.01
+                        if (event.key == K_DOWN):
+                            delay = delay + 0.05
                 if (floorChange != 0):
                     self.activeFloor = self.activeFloor + floorChange
+                    self.preRenderMaze()
+                    self.renderMaze()
+                    self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+                    self.screen.blit(self.currentMaze, self.mazePos)
+                    self.floorCounter.text = "Floor: " + str(self.activeFloor)
+                    self.floorCounter.preRender()
+                    print("Viewing Floor", self.activeFloor)
+                    self.renderObjects()
                 else:
                     # self.renderMaze()
-                    print("draw line: ",currentPos, nextPos)
+                    #print("draw line: ",currentPos, nextPos)
                     pygame.draw.line(self.currentMaze, (255, 0, 255), currentPos, nextPos, 3)
 
                     self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
                     self.screen.blit(self.currentMaze,self.mazePos)
-                    time.sleep(0.2)
+                    time.sleep(delay)
                     pygame.display.update()
                     #print("did I do that")
                 #time.sleep(1)
@@ -557,6 +579,78 @@ class Display:
         self.bellmanFordSolution = (last,lengths)
         if(self.dijkstraSolution == None):
             self.renderBellmanFromActiveNode = True
+
+    def button_stepThroughBellmanFord(self):
+        if (self.bellmanFordSolution == None):
+            pyautogui.alert(text="You must solve using Bellman Ford's algorithm first.", title="Error")
+            return
+        else:
+            self.preRenderMaze()
+            self.renderMaze()
+            self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+            self.screen.blit(self.currentMaze, self.mazePos)
+            stack = []
+            (last, lengths) = self.bellmanFordSolution
+            currentNode = self.endNode
+            numNodes = 0
+            delay = 0.2
+            while (currentNode != self.startNode):
+                nextNode = last[currentNode]
+                currentPos = ((currentNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                              int((currentNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
+                              self.gridCellSize[1] / 2)
+                nextPos = ((nextNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                           int((nextNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
+                           self.gridCellSize[1] / 2)
+                currentNodeFloor = int(currentNode / (self.rows * self.columns))
+                nextNodeFloor = int(nextNode / (self.rows * self.columns))
+                stack.append((currentPos, nextPos, currentNodeFloor - nextNodeFloor))
+                currentNode = nextNode
+                numNodes += 1
+            while (len(stack) > 0):
+                values = stack[len(stack) - 1]
+                stack.pop(len(stack) - 1)
+                currentPos = values[0]
+                nextPos = values[1]
+                floorChange = values[2]
+                # print(currentPos)
+                # print(nextPos)
+                # print(floorChange)
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        quit()
+                    if event.type == KEYDOWN:
+                        if (event.key == K_ESCAPE):
+                            quit()
+                        if (event.key == K_UP):
+                            if(delay - 0.05 > 0):
+                                delay = delay - 0.05
+                            else:
+                                delay = 0.01
+                        if (event.key == K_DOWN):
+                            delay = delay + 0.05
+                if (floorChange != 0):
+                    self.activeFloor = self.activeFloor + floorChange
+                    self.preRenderMaze()
+                    self.renderMaze()
+                    self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+                    self.screen.blit(self.currentMaze, self.mazePos)
+                    self.floorCounter.text = "Floor: " + str(self.activeFloor)
+                    self.floorCounter.preRender()
+                    print("Viewing Floor", self.activeFloor)
+                    self.renderObjects()
+                else:
+                    # self.renderMaze()
+                    #print("draw line: ",currentPos, nextPos)
+                    pygame.draw.line(self.currentMaze, (0, 255, 0), currentPos, nextPos, 3)
+
+                    self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+                    self.screen.blit(self.currentMaze,self.mazePos)
+                    time.sleep(delay)
+                    pygame.display.update()
+                    #print("did I do that")
+                #time.sleep(1)
+            pygame.display.update()
 
     def updateProcessing(self, percent=-1):
         percent = int(percent)

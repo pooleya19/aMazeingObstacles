@@ -271,7 +271,6 @@ class Display:
                             pygame.draw.line(self.currentMaze,(0,255,0),currentPos,nextPos,3)
                         currentNode = nextNode
                         numNodes += 1
-        #if(self.renderBellmanFromActiveNode):
         if(self.bellmanFordSolution != None and self.endNode != None):
             (last, lengths) = self.bellmanFordSolution
             activeNode = self.endNode
@@ -391,7 +390,6 @@ class Display:
                             row * gridCellSize[1] + gridCellSize[1] * 0.5 - 1)
                 edges = self.graph.adjList[node1]
                 for node2 in edges.keys():
-                    # print(self.graph.adjList[node1][node2].getName())
                     pathName = self.graph.adjList[node1][node2].getName()
                     lineColor = self.edgeDict[pathName][0]
                     node2column = node2 % self.columns
@@ -489,11 +487,6 @@ class Display:
             pyautogui.alert(text="You must solve using Dijkstra's algorithm first.", title="Error")
             return
         else:
-            # self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
-            # self.screen.blit(self.currentMaze, self.mazePos)
-            # pygame.display.update()
-            # time.sleep(0.001)
-            # self.update()
             self.preRenderMaze()
             self.renderMaze()
             self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
@@ -515,7 +508,6 @@ class Display:
                 currentNodeFloor = int(currentNode / (self.rows * self.columns))
                 nextNodeFloor = int(nextNode / (self.rows * self.columns))
                 stack.append((currentPos, nextPos, currentNodeFloor - nextNodeFloor))
-                #print((currentPos, nextPos))
                 currentNode = nextNode
                 numNodes += 1
                 totalDist += lengths[currentNode]
@@ -525,9 +517,6 @@ class Display:
                 currentPos = values[0]
                 nextPos = values[1]
                 floorChange = values[2]
-                # print(currentPos)
-                # print(nextPos)
-                # print(floorChange)
                 for event in pygame.event.get():
                     if event.type == QUIT:
                         quit()
@@ -552,16 +541,12 @@ class Display:
                     print("Viewing Floor", self.activeFloor)
                     self.renderObjects()
                 else:
-                    # self.renderMaze()
-                    #print("draw line: ",currentPos, nextPos)
                     pygame.draw.line(self.currentMaze, (255, 0, 255), currentPos, nextPos, 3)
 
                     self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
                     self.screen.blit(self.currentMaze,self.mazePos)
                     time.sleep(delay)
                     pygame.display.update()
-                    #print("did I do that")
-                #time.sleep(1)
             pygame.display.update()
 
     def button_solveBellmanFord(self):
@@ -613,9 +598,6 @@ class Display:
                 currentPos = values[0]
                 nextPos = values[1]
                 floorChange = values[2]
-                # print(currentPos)
-                # print(nextPos)
-                # print(floorChange)
                 for event in pygame.event.get():
                     if event.type == QUIT:
                         quit()
@@ -640,16 +622,12 @@ class Display:
                     print("Viewing Floor", self.activeFloor)
                     self.renderObjects()
                 else:
-                    # self.renderMaze()
-                    #print("draw line: ",currentPos, nextPos)
                     pygame.draw.line(self.currentMaze, (0, 255, 0), currentPos, nextPos, 3)
 
                     self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
                     self.screen.blit(self.currentMaze,self.mazePos)
                     time.sleep(delay)
                     pygame.display.update()
-                    #print("did I do that")
-                #time.sleep(1)
             pygame.display.update()
 
     def updateProcessing(self, percent=-1):

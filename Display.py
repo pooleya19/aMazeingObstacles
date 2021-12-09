@@ -21,6 +21,16 @@ class Display:
         self.graph = None
         self.activeNode = None
         self.currentNode = None
+        self.startNode = None
+        self.endNode = None
+
+        self.edgeDict = {"Water": ((0, 0, 255), 50),
+                         "Conveyor Belt": ((255, 178, 102), 5),
+                         "Glue": ((255, 255, 51), 35),
+                         "Ice": ((153, 255, 255), 10),
+                         "Minotaur": ((255, 0, 0), 60),
+                         "Path": ((255, 255, 255), 20),
+                         "Ladder": ((0, 0, 0), 40)}
 
     def start(self):
         print("Beginning Program.")
@@ -74,13 +84,19 @@ class Display:
         self.texts.append(self.floorCounter)
         self.processing = Text("Processing...",30,(1070,780))
 
-        self.edgeDict = {"Water":((0,0,255),50),
-                          "Conveyor Belt":((255,178,102),5),
-                          "Glue":((255,255,51),35),
-                          "Ice":((153,255,255),10),
-                          "Minotaur":((255,0,0),60),
-                          "Path":((255,255,255),20),
-                          "Ladder":((0,0,0),40)}
+        self.texts.append(Text("Path: Start->End", 25, (510,440)))
+        self.dijkstraNodesTraversed = Text("Nodes Traversed: N/A", 25, (510,480))
+        self.texts.append(self.dijkstraNodesTraversed)
+        self.dijkstraTotalDifficulty = Text("Total Difficulty: N/A", 25, (510,520))
+        self.texts.append(self.dijkstraTotalDifficulty)
+
+        self.texts.append(Text("Path: Start->End", 25, (510, 640)))
+        self.bellmanFordNodesTraversed = Text("Nodes Traversed: N/A", 25, (510, 680))
+        self.texts.append(self.bellmanFordNodesTraversed)
+        self.bellmanFordTotalDifficulty = Text("Total Difficulty: N/A", 25, (510, 720))
+        self.texts.append(self.bellmanFordTotalDifficulty)
+
+
 
 
     def setupMaze(self):
@@ -128,6 +144,7 @@ class Display:
         self.renderBellmanFord()
         self.drawMaze()
         self.renderLegend()
+        self.renderPathInfo()
         pygame.display.update()
 
     def renderObjects(self):
@@ -143,14 +160,16 @@ class Display:
             if event.type == KEYDOWN:
                 if (event.key == K_ESCAPE):
                     quit()
-                elif(event.key == K_SPACE):
+                elif(event.key == K_d):
                     self.renderingDijkstra = True
-                elif(event.key == K_v):
+                elif(event.key == K_b):
                     self.renderingBellmanFord = True
+                elif(event.key == K_f):
+                    print("flag")
             if event.type == KEYUP:
-                if(event.key == K_SPACE):
+                if(event.key == K_d):
                     self.renderingDijkstra = False
-                elif(event.key == K_v):
+                elif(event.key == K_b):
                     self.renderingBellmanFord = False
             if event.type == MOUSEBUTTONDOWN:
                 for button in self.buttons:
@@ -180,7 +199,7 @@ class Display:
                     (last,lengths) = self.dijkstraSolution
                     currentNode = mouseNode
                     numNodes = 0
-                    totalDist = 0
+                    totalDist = lengths[mouseNode]
                     while(currentNode != self.startNode):
                         nextNode = last[currentNode]
                         currentPos = ((currentNode % self.columns)*self.gridCellSize[0]+self.gridCellSize[0]/2,int((currentNode%(self.rows*self.columns)) / self.columns)*self.gridCellSize[1]+self.gridCellSize[1]/2)
@@ -191,28 +210,42 @@ class Display:
                             pygame.draw.line(self.currentMaze,(255,0,255),currentPos,nextPos,3)
                         currentNode = nextNode
                         numNodes += 1
-                        totalDist += lengths[currentNode]
-        if(self.activeNode != None):
-            if (self.dijkstraSolution != None):
-                (last, lengths) = self.dijkstraSolution
-                currentNode = self.activeNode
-                numNodes = 0
-                activeNodeDist = 0
-                while (currentNode != self.startNode):
-                    nextNode = last[currentNode]
-                    currentPos = ((currentNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
-                                  int((currentNode % (self.rows * self.columns)) / self.columns) *
-                                  self.gridCellSize[1] + self.gridCellSize[1] / 2)
-                    nextPos = ((nextNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
-                               int((nextNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
-                               self.gridCellSize[1] / 2)
-                    currentNodeFloor = int(currentNode / (self.rows * self.columns))
-                    nextNodeFloor = int(nextNode / (self.rows * self.columns))
-                    if (currentNodeFloor == self.activeFloor and nextNodeFloor == self.activeFloor):
-                        pygame.draw.line(self.currentMaze, (0, 0, 0), currentPos, nextPos, 3)
-                    currentNode = nextNode
-                    numNodes += 1
-                    activeNodeDist += lengths[currentNode]
+        if (self.dijkstraSolution != None):
+            (last, lengths) = self.dijkstraSolution
+            currentNode = self.endNode
+            numNodes = 0
+            activeNodeDist = lengths[self.endNode]
+            while (currentNode != self.startNode):
+                nextNode = last[currentNode]
+                currentPos = ((currentNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                              int((currentNode % (self.rows * self.columns)) / self.columns) *
+                              self.gridCellSize[1] + self.gridCellSize[1] / 2)
+                nextPos = ((nextNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                           int((nextNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
+                           self.gridCellSize[1] / 2)
+                currentNodeFloor = int(currentNode / (self.rows * self.columns))
+                nextNodeFloor = int(nextNode / (self.rows * self.columns))
+                if (currentNodeFloor == self.activeFloor and nextNodeFloor == self.activeFloor):
+                    pygame.draw.line(self.currentMaze, (0, 0, 0), currentPos, nextPos, 3)
+                currentNode = nextNode
+                numNodes += 1
+            newMessage = "Nodes Traversed: " + str(numNodes)
+            if(self.dijkstraNodesTraversed.text != newMessage):
+                self.dijkstraNodesTraversed.text = newMessage
+                self.dijkstraNodesTraversed.preRender()
+            newMessage = "Total Difficulty: " + str(activeNodeDist)
+            if(self.dijkstraTotalDifficulty.text != newMessage):
+                self.dijkstraTotalDifficulty.text = newMessage
+                self.dijkstraTotalDifficulty.preRender()
+        else:
+            newMessage = "Nodes Traversed: N/A"
+            if (self.dijkstraNodesTraversed.text != newMessage):
+                self.dijkstraNodesTraversed.text = newMessage
+                self.dijkstraNodesTraversed.preRender()
+            newMessage = "Total Difficulty: N/A"
+            if (self.dijkstraTotalDifficulty.text != newMessage):
+                self.dijkstraTotalDifficulty.text = newMessage
+                self.dijkstraTotalDifficulty.preRender()
 
 
 
@@ -227,7 +260,7 @@ class Display:
                     (last,lengths) = self.bellmanFordSolution
                     currentNode = mouseNode
                     numNodes = 0
-                    totalDist = 0
+                    totalDist = lengths[mouseNode]
                     while(currentNode != self.startNode):
                         nextNode = last[currentNode]
                         currentPos = ((currentNode % self.columns)*self.gridCellSize[0]+self.gridCellSize[0]/2,int((currentNode%(self.rows*self.columns)) / self.columns)*self.gridCellSize[1]+self.gridCellSize[1]/2)
@@ -238,32 +271,50 @@ class Display:
                             pygame.draw.line(self.currentMaze,(0,255,0),currentPos,nextPos,3)
                         currentNode = nextNode
                         numNodes += 1
-                        totalDist += lengths[currentNode]
-        if(self.renderBellmanFromActiveNode):
-            if(self.bellmanFordSolution != None):
-                (last, lengths) = self.bellmanFordSolution
-                currentNode = self.activeNode
-                numNodes = 0
-                totalActiveDist = 0
-                while (currentNode != self.startNode):
-                    nextNode = last[currentNode]
-                    currentPos = ((currentNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
-                                  int((currentNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[
-                                      1] + self.gridCellSize[1] / 2)
-                    nextPos = ((nextNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
-                               int((nextNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
-                               self.gridCellSize[1] / 2)
-                    currentNodeFloor = int(currentNode / (self.rows * self.columns))
-                    nextNodeFloor = int(nextNode / (self.rows * self.columns))
-                    if (currentNodeFloor == self.activeFloor and nextNodeFloor == self.activeFloor):
-                        pygame.draw.line(self.currentMaze, (0, 0, 0), currentPos, nextPos, 3)
-                    currentNode = nextNode
-                    numNodes += 1
-                    totalActiveDist += lengths[currentNode]
+        #if(self.renderBellmanFromActiveNode):
+        if(self.bellmanFordSolution != None and self.endNode != None):
+            (last, lengths) = self.bellmanFordSolution
+            activeNode = self.endNode
+            numNodes = 0
+            totalActiveDist = lengths[self.endNode]
+            while (activeNode != self.startNode):
+                nextNode = last[activeNode]
+                activePos = ((activeNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                              int((activeNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[
+                                  1] + self.gridCellSize[1] / 2)
+                nextPos = ((nextNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                           int((nextNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
+                           self.gridCellSize[1] / 2)
+                activeNodeFloor = int(activeNode / (self.rows * self.columns))
+                nextNodeFloor = int(nextNode / (self.rows * self.columns))
+                if (activeNodeFloor == self.activeFloor and nextNodeFloor == self.activeFloor):
+                    pygame.draw.line(self.currentMaze, (0, 0, 0), activePos, nextPos, 3)
+                activeNode = nextNode
+                numNodes += 1
+            newMessage = "Nodes Traversed: " + str(numNodes)
+            if (self.bellmanFordNodesTraversed.text != newMessage):
+                self.bellmanFordNodesTraversed.text = newMessage
+                self.bellmanFordNodesTraversed.preRender()
+            newMessage = "Total Difficulty: " + str(totalActiveDist)
+            if (self.bellmanFordTotalDifficulty.text != newMessage):
+                self.bellmanFordTotalDifficulty.text = newMessage
+                self.bellmanFordTotalDifficulty.preRender()
+        else:
+            newMessage = "Nodes Traversed: N/A"
+            if (self.bellmanFordNodesTraversed.text != newMessage):
+                self.bellmanFordNodesTraversed.text = newMessage
+                self.bellmanFordNodesTraversed.preRender()
+            newMessage = "Total Difficulty: N/A"
+            if (self.bellmanFordTotalDifficulty.text != newMessage):
+                self.bellmanFordTotalDifficulty.text = newMessage
+                self.bellmanFordTotalDifficulty.preRender()
 
     def renderLegend(self):
         if(self.renderingLegend):
             self.screen.blit(self.legend, self.legendPos)
+
+    def renderPathInfo(self):
+        pass
 
     def drawMaze(self):
         self.screen.blit(self.mazeBorder, (self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
@@ -282,7 +333,6 @@ class Display:
                 self.gridCellSize[1] * int((self.endNode % (self.rows * self.columns)) / self.columns) +
                 self.gridCellSize[1] / 2 - endNodeSize[1] / 2)
                 self.currentMaze.blit(self.endNodeSurface, endNodePos)
-                print("rendering",endNodePos)
 
             mousePos = (pygame.mouse.get_pos()[0] - self.mazePos[0], pygame.mouse.get_pos()[1] - self.mazePos[1])
             if (0 < mousePos[0] < self.mazeSize[0] and 0 < mousePos[1] < self.mazeSize[1]):
@@ -294,17 +344,10 @@ class Display:
                     mouseMazePos[1] * self.gridCellSize[1] + self.gridCellSize[1] / 2 - currentNodeSize[1] / 2)
                 self.currentMaze.blit(self.currentNodeSurface, currentNodePos)
             if(self.activeNode != None):
-                nonFloorNodePos = self.activeNode - self.rows * self.columns * self.activeFloor
-                currRow = (nonFloorNodePos % self.columns)
-                currColumn = math.floor(nonFloorNodePos / self.columns)
-                activeNodePos = (currRow, currColumn)
-                activeNodeSize = self.currentNodeSurface.get_size()
-                activeNodePos = (
-                    activeNodePos[0] * self.gridCellSize[0] + self.gridCellSize[0] / 2 - activeNodeSize[0] / 2,
-                    activeNodePos[1] * self.gridCellSize[1] + self.gridCellSize[1] / 2 - activeNodeSize[1] / 2)
-                self.currentMaze.blit(self.currentNodeSurface, activeNodePos)
-                #render activeNode onto maze (the node that was clicked on)
-                #activeNodePos =
+                activeNodeMazePos = (self.activeNode % self.columns, int((self.activeNode % (self.rows * self.columns)) / self.columns))
+                activeNodeSize = self.activeNodeSurface.get_size()
+                activeNodePos = (activeNodeMazePos[0] * self.gridCellSize[0] + self.gridCellSize[0]/2 - activeNodeSize[0]/2, activeNodeMazePos[1] * self.gridCellSize[1] + self.gridCellSize[1]/2 - activeNodeSize[1]/2)
+                self.currentMaze.blit(self.activeNodeSurface, activeNodePos)
             self.screen.blit(self.currentMaze, self.mazePos)
 
     def button_generateMaze(self):
@@ -406,6 +449,9 @@ class Display:
             self.rows = newRows
             self.columns = newColumns
             self.floors = newFloors
+            self.graph = None
+            self.renderedMaze = None
+            self.currentMaze = None
             print("Set New Maze Dimensions: (",self.rows,",",self.columns,",",self.floors,")",sep='')
 
     def button_floorUp(self):
@@ -429,7 +475,8 @@ class Display:
             pyautogui.alert(text="You must generate a maze first.",title="Error")
             return
         if(self.renderBellmanFromActiveNode):
-            self.renderBellmanFromActiveNode = False
+            pass
+            #self.renderBellmanFromActiveNode = False
         print("Solving Maze using Dijkstra's Algorithm")
         self.updateProcessing()
         startTime = time.time()
@@ -444,6 +491,7 @@ class Display:
         if(self.dijkstraSolution == None):
             pyautogui.alert(text="You must solve using Dijkstra's algorithm first.",title="Error")
             return
+        time.sleep(10)
 
     def button_solveBellmanFord(self):
         if(self.graph == None):
@@ -476,10 +524,16 @@ class Display:
         self.renderingLegend = False
 
     def button_setStart(self):
-        pass
+        if(self.activeNode != None):
+            self.startNode = self.activeNode
+            self.activeNode = None
+            self.dijkstraSolution = None
+            self.bellmanFordSolution = None
 
     def button_setEnd(self):
-        pass
+        if (self.activeNode != None):
+            self.endNode = self.activeNode
+            self.activeNode = None
 
     def mouseMazeClick(self):
         if(self.graph != None):

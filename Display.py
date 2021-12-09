@@ -494,6 +494,18 @@ class Display:
             stack = []
             (last, lengths) = self.dijkstraSolution
             currentNode = self.endNode
+
+            startNodeFloor = int(self.startNode / (self.rows * self.columns))
+            self.activeFloor = startNodeFloor
+            self.preRenderMaze()
+            self.renderMaze()
+            self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+            self.screen.blit(self.currentMaze, self.mazePos)
+            self.floorCounter.text = "Floor: " + str(self.activeFloor)
+            self.floorCounter.preRender()
+            print("Viewing Floor", self.activeFloor)
+            self.renderObjects()
+
             numNodes = 0
             totalDist = 0
             delay = 0.2
@@ -577,6 +589,16 @@ class Display:
             stack = []
             (last, lengths) = self.bellmanFordSolution
             currentNode = self.endNode
+            startNodeFloor = int(self.startNode / (self.rows * self.columns))
+            self.activeFloor = startNodeFloor
+            self.preRenderMaze()
+            self.renderMaze()
+            self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+            self.screen.blit(self.currentMaze, self.mazePos)
+            self.floorCounter.text = "Floor: " + str(self.activeFloor)
+            self.floorCounter.preRender()
+            print("Viewing Floor", self.activeFloor)
+            self.renderObjects()
             numNodes = 0
             delay = 0.2
             while (currentNode != self.startNode):

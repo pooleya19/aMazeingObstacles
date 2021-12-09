@@ -58,6 +58,7 @@ class Display:
         self.screen.blit(self.background, (0,0))
 
     def createObjects(self):
+        #Button(text, fontSize, center position, function(optional) WITHOUT PARENTHESIS)
         self.buttons.append(Button("Generate Maze",50,(200,200),self.button_generateMaze))
         self.buttons.append(Button("Set Dimensions",30,(200,270),self.button_setDimensions))
 
@@ -144,7 +145,6 @@ class Display:
         self.renderBellmanFord()
         self.drawMaze()
         self.renderLegend()
-        self.renderPathInfo()
         pygame.display.update()
 
     def renderObjects(self):
@@ -312,9 +312,6 @@ class Display:
     def renderLegend(self):
         if(self.renderingLegend):
             self.screen.blit(self.legend, self.legendPos)
-
-    def renderPathInfo(self):
-        pass
 
     def drawMaze(self):
         self.screen.blit(self.mazeBorder, (self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
@@ -534,10 +531,16 @@ class Display:
                     self.activeFloor = self.activeFloor + floorChange
                 else:
                     # self.renderMaze()
+                    print("draw line: ",currentPos, nextPos)
                     pygame.draw.line(self.currentMaze, (255, 0, 255), currentPos, nextPos, 3)
-                    print("did I do that")
-                pygame.display.update()
-                time.sleep(1)
+
+                    self.screen.blit(self.mazeBorder,(self.mazePos[0] - self.mazeBorderThick, self.mazePos[1] - self.mazeBorderThick))
+                    self.screen.blit(self.currentMaze,self.mazePos)
+                    time.sleep(0.2)
+                    pygame.display.update()
+                    #print("did I do that")
+                #time.sleep(1)
+            pygame.display.update()
 
     def button_solveBellmanFord(self):
         if(self.graph == None):

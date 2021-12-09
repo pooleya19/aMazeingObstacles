@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import sys
 import pyautogui
+import math
 import time
 
 from Button import Button
@@ -19,6 +20,7 @@ class Display:
         self.activeFloor = 0
         self.graph = None
         self.activeNode = None
+        self.currentNode = None
 
     def start(self):
         print("Beginning Program.")
@@ -37,6 +39,7 @@ class Display:
         self.dijkstraSolution = None
         self.renderingBellmanFord = False
         self.bellmanFordSolution = None
+        self.renderBellmanFromActiveNode = False
 
         self.preRenderLegend()
         self.renderingLegend = False
@@ -88,6 +91,7 @@ class Display:
         self.maze = self.makeSurface(self.mazeSize, (150, 150, 150))
         self.renderedMaze = None
         self.currentMaze = None
+        self.activeNode = None
 
         self.rows = 20
         self.columns = 20
@@ -153,8 +157,12 @@ class Display:
                     if(button.mouseOver()):
                         button.activate()
                 mousePos = pygame.mouse.get_pos()
-                if(self.mazePos[0] < mousePos[0] < self.mazePos[0] + self.mazeSize[0] and self.mazePos[1] < mousePos[1] < self.mazePos[1] + self.mazeSize[1]):
+                keyPressed = pygame.mouse.get_pressed()
+                if(self.mazePos[0] < mousePos[0] < self.mazePos[0] + self.mazeSize[0] and self.mazePos[1] < mousePos[1] < self.mazePos[1] + self.mazeSize[1] and keyPressed[0]):
+                    # checks for left click now
                     self.mouseMazeClick()
+                elif(keyPressed[2]): #  Checks for right click
+                    self.clearActiveNode()
 
     def renderMaze(self):
         if(self.renderedMaze != None):
@@ -184,6 +192,29 @@ class Display:
                         currentNode = nextNode
                         numNodes += 1
                         totalDist += lengths[currentNode]
+        if(self.activeNode != None):
+            if (self.dijkstraSolution != None):
+                (last, lengths) = self.dijkstraSolution
+                currentNode = self.activeNode
+                numNodes = 0
+                activeNodeDist = 0
+                while (currentNode != self.startNode):
+                    nextNode = last[currentNode]
+                    currentPos = ((currentNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                                  int((currentNode % (self.rows * self.columns)) / self.columns) *
+                                  self.gridCellSize[1] + self.gridCellSize[1] / 2)
+                    nextPos = ((nextNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                               int((nextNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
+                               self.gridCellSize[1] / 2)
+                    currentNodeFloor = int(currentNode / (self.rows * self.columns))
+                    nextNodeFloor = int(nextNode / (self.rows * self.columns))
+                    if (currentNodeFloor == self.activeFloor and nextNodeFloor == self.activeFloor):
+                        pygame.draw.line(self.currentMaze, (0, 0, 0), currentPos, nextPos, 3)
+                    currentNode = nextNode
+                    numNodes += 1
+                    activeNodeDist += lengths[currentNode]
+
+
 
     def renderBellmanFord(self):
         if(self.renderingBellmanFord):
@@ -208,6 +239,27 @@ class Display:
                         currentNode = nextNode
                         numNodes += 1
                         totalDist += lengths[currentNode]
+        if(self.renderBellmanFromActiveNode):
+            if(self.bellmanFordSolution != None):
+                (last, lengths) = self.bellmanFordSolution
+                currentNode = self.activeNode
+                numNodes = 0
+                totalActiveDist = 0
+                while (currentNode != self.startNode):
+                    nextNode = last[currentNode]
+                    currentPos = ((currentNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                                  int((currentNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[
+                                      1] + self.gridCellSize[1] / 2)
+                    nextPos = ((nextNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                               int((nextNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
+                               self.gridCellSize[1] / 2)
+                    currentNodeFloor = int(currentNode / (self.rows * self.columns))
+                    nextNodeFloor = int(nextNode / (self.rows * self.columns))
+                    if (currentNodeFloor == self.activeFloor and nextNodeFloor == self.activeFloor):
+                        pygame.draw.line(self.currentMaze, (0, 0, 0), currentPos, nextPos, 3)
+                    currentNode = nextNode
+                    numNodes += 1
+                    totalActiveDist += lengths[currentNode]
 
     def renderLegend(self):
         if(self.renderingLegend):
@@ -242,7 +294,15 @@ class Display:
                     mouseMazePos[1] * self.gridCellSize[1] + self.gridCellSize[1] / 2 - currentNodeSize[1] / 2)
                 self.currentMaze.blit(self.currentNodeSurface, currentNodePos)
             if(self.activeNode != None):
-                pass
+                nonFloorNodePos = self.activeNode - self.rows * self.columns * self.activeFloor
+                currRow = (nonFloorNodePos % self.columns)
+                currColumn = math.floor(nonFloorNodePos / self.columns)
+                activeNodePos = (currRow, currColumn)
+                activeNodeSize = self.currentNodeSurface.get_size()
+                activeNodePos = (
+                    activeNodePos[0] * self.gridCellSize[0] + self.gridCellSize[0] / 2 - activeNodeSize[0] / 2,
+                    activeNodePos[1] * self.gridCellSize[1] + self.gridCellSize[1] / 2 - activeNodeSize[1] / 2)
+                self.currentMaze.blit(self.currentNodeSurface, activeNodePos)
                 #render activeNode onto maze (the node that was clicked on)
                 #activeNodePos =
             self.screen.blit(self.currentMaze, self.mazePos)
@@ -368,6 +428,8 @@ class Display:
         if(self.graph == None):
             pyautogui.alert(text="You must generate a maze first.",title="Error")
             return
+        if(self.renderBellmanFromActiveNode):
+            self.renderBellmanFromActiveNode = False
         print("Solving Maze using Dijkstra's Algorithm")
         self.updateProcessing()
         startTime = time.time()
@@ -396,6 +458,8 @@ class Display:
         print(elapsedTimeMsg)
         pyautogui.alert(text=elapsedTimeMsg,title="Bellman Ford's Algorithm Runtime")
         self.bellmanFordSolution = (last,lengths)
+        if(self.dijkstraSolution == None):
+            self.renderBellmanFromActiveNode = True
 
     def updateProcessing(self, percent=-1):
         percent = int(percent)
@@ -420,6 +484,9 @@ class Display:
     def mouseMazeClick(self):
         if(self.graph != None):
             self.activeNode = self.currentNode
+
+    def clearActiveNode(self):
+        self.activeNode = None
 
     def isInt(self, inputString):
         try:

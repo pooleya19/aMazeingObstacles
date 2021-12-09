@@ -488,10 +488,56 @@ class Display:
         self.dijkstraSolution = (last,lengths)
 
     def button_stepThroughDijkstra(self):
-        if(self.dijkstraSolution == None):
-            pyautogui.alert(text="You must solve using Dijkstra's algorithm first.",title="Error")
+        if (self.dijkstraSolution == None):
+            pyautogui.alert(text="You must solve using Dijkstra's algorithm first.", title="Error")
             return
-        time.sleep(10)
+        else:
+            # pygame.display.update()
+            # time.sleep(0.001)
+            # self.update()
+            stack = []
+            (last, lengths) = self.dijkstraSolution
+            currentNode = self.endNode
+            numNodes = 0
+            totalDist = 0
+            while (currentNode != self.startNode):
+                nextNode = last[currentNode]
+                currentPos = ((currentNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                              int((currentNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
+                              self.gridCellSize[1] / 2)
+                nextPos = ((nextNode % self.columns) * self.gridCellSize[0] + self.gridCellSize[0] / 2,
+                           int((nextNode % (self.rows * self.columns)) / self.columns) * self.gridCellSize[1] +
+                           self.gridCellSize[1] / 2)
+                currentNodeFloor = int(currentNode / (self.rows * self.columns))
+                nextNodeFloor = int(nextNode / (self.rows * self.columns))
+                if (currentNodeFloor == self.activeFloor and nextNodeFloor == self.activeFloor):
+                    # pygame.draw.line(self.currentMaze, (255, 0, 255), currentPos, nextPos, 3)
+                    stack.append((currentPos, nextPos, 0))
+                elif (currentNodeFloor == self.activeFloor and nextNodeFloor > self.activeFloor):
+                    stack.append((currentPos, nextPos, 1))
+                elif (currentNodeFloor == self.activeFloor and nextNodeFloor < self.activeFloor):
+                    stack.append((currentPos, nextPos, -1))
+                print((currentPos, nextPos))
+                currentNode = nextNode
+                numNodes += 1
+                totalDist += lengths[currentNode]
+            while (len(stack) > 0):
+                values = stack[len(stack) - 1]
+                stack.pop(len(stack) - 1)
+                currentPos = values[0]
+                nextPos = values[1]
+                floorChange = values[2]
+                # print(currentPos)
+                # print(nextPos)
+                # print(floorChange)
+                if (floorChange != 0):
+                    self.activeFloor = self.activeFloor + floorChange
+                else:
+                    # self.renderMaze()
+                    pygame.draw.line(self.currentMaze, (255, 0, 255), currentPos, nextPos, 3)
+                    print("did I do that")
+                pygame.display.update()
+                time.sleep(1)
 
     def button_solveBellmanFord(self):
         if(self.graph == None):
